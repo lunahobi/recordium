@@ -5,6 +5,15 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "test_steps")
 public class TestStep {
+    public TestStep(Long id, Long testId, Integer stepNumber, String action, String button, String location, String details) {
+        this.id = id;
+        this.testId = testId;
+        this.stepNumber = stepNumber;
+        this.action = action;
+        this.button = button;
+        this.location = location;
+        this.details = details;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,8 +28,18 @@ public class TestStep {
     @Column(name = "action", nullable = false)
     private String action;
 
-    @Column(name = "target")
-    private String target;
+    @Column(name = "button", nullable = true)
+    private String button;
+
+    @Column(name = "location", nullable = true)
+    private String location;
+
+    @Column(name = "details", nullable = true)
+    private String details;
+
+    public TestStep() {
+
+    }
 
     // Getters and Setters
     public Long getId() {
@@ -55,11 +74,27 @@ public class TestStep {
         this.action = action;
     }
 
-    public String getTarget() {
-        return target;
+    public String getButton() {
+        return button;
     }
 
-    public void setTarget(String target) {
-        this.target = target;
+    public void setButton(String button) {
+        this.button = button;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
     }
 }

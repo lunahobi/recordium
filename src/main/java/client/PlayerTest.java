@@ -1,6 +1,5 @@
-package tests;
+package client;
 
-import client.ReportGenerator;
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.logevents.SelenideLogger;
@@ -8,28 +7,31 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.qameta.allure.selenide.AllureSelenide;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import io.qameta.allure.Step;
+import server.model.TestStep;
 
-
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
-
 public class PlayerTest {
-    public static String url = "https://reqres.in";
+    public static String url;
     WebDriver driver;
     private WebDriverWait wait;
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    public Long testId;
 
     public void setUp() {
         WebDriverManager.chromedriver().setup();
@@ -38,6 +40,10 @@ public class PlayerTest {
         Configuration.webdriverLogsEnabled = true;
         Configuration.headless = false;
         Configuration.timeout = 10000;
+
+        // Получение URL из системного свойства
+        url = System.getProperty("test.url", "https://reqres.in");
+        testId = Long.valueOf(System.getProperty("test.testId", "1"));
 
         // Создание ChromeOptions
         ChromeOptions options = new ChromeOptions();
@@ -50,7 +56,7 @@ public class PlayerTest {
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
-    @Before
+    @BeforeEach
     public void init(){
         setUp();
 
@@ -61,18 +67,19 @@ public class PlayerTest {
                 .savePageSource(false));
     }
 
-    @After
+    @AfterEach
     public void tearDown(){
         Selenide.closeWebDriver();
         driver.quit();
     }
+
     @Step("Open URL: {url}")
     public void openUrl(String url) {
         driver.get(url);
     }
 
     @Step("Replay step: {step.action} on {step.location} with details {step.details}")
-    public void replayStep(client.Step step) {
+    public void replayStep(TestStep step) {
         try {
             switch (step.getAction()) {
                 case "Click":
@@ -103,30 +110,33 @@ public class PlayerTest {
     private void scrollToElement(WebElement element) {
         ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", element);
     }
-    public void replayStepsFromFile(String fileName, String url) throws IOException {
-        File file = new File(fileName);
-        if (!file.exists()) {
-            throw new IOException("File not found: " + fileName);
+
+    public List<TestStep> fetchStepsFromApi(Long testId) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:8080/api/tests/" + testId + "/steps"))
+                .header("Accept", "application/json")
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new IOException("Failed to fetch steps: HTTP code " + response.statusCode());
         }
+
         ObjectMapper mapper = new ObjectMapper();
-        List<client.Step> steps = mapper.readValue(file, new TypeReference<List<client.Step>>() {});
+        return mapper.readValue(response.body(), new TypeReference<List<TestStep>>() {});
+    }
+
+    @Test
+    public void test() throws IOException, InterruptedException {
+        List<TestStep> steps = fetchStepsFromApi(testId);
+
         openUrl(url);
-        for (client.Step step : steps) {
+        for (TestStep step : steps) {
             try {
                 replayStep(step);
             } catch (Exception e) {
                 System.err.println("Error during step: " + step + " -> " + e.getMessage());
             }
         }
-    }
-
-    @Test
-    public void test() throws IOException {
-        replayStepsFromFile("steps.json", url);
-
-        // Генерация отчета Allure
-        ReportGenerator reportGenerator = new ReportGenerator();
-        reportGenerator.generateReport();
-
     }
 }

@@ -228,15 +228,15 @@ class TestManager {
         stepsTable.getColumns().addAll(actionColumn, buttonColumn, locationColumn, detailsColumn);
         stepsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        Button startButton = new Button("Start Recording");
-        Button stopButton = new Button("Stop Recording");
+        Button startButton = new Button("Начать запись шагов");
+        Button stopButton = new Button("Остановить запись шагов");
         stopButton.setDisable(true);
-        Button replayButton = new Button("Replay Test");
-        Button showReportButton = new Button("Show Report");
+        Button replayButton = new Button("Повторить тест");
+        Button showReportButton = new Button("Показать отчет");
         showReportButton.setDisable(true);
-        Button saveStepsButton = new Button("Save Steps");
+        Button saveStepsButton = new Button("Сохранить шаги");
         saveStepsButton.setDisable(true);
-        Button updateButton = new Button("Update Test");
+        Button updateButton = new Button("Обновить данные");
         if (steps.isEmpty()) {
             replayButton.setDisable(true);
 
@@ -244,7 +244,7 @@ class TestManager {
         startButton.setOnAction(e -> {
             String startUrl = urlInput.getText();
             if (startUrl == null || startUrl.isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Please enter a valid URL.");
+                showAlert(Alert.AlertType.WARNING, "Введите валидный URL.");
                 return;
             }
             System.out.println("URL is = " + startUrl);
@@ -320,16 +320,16 @@ class TestManager {
                         sendPostRequest(testId.intValue(), testStep); // Передаём testId и текущий шаг
                     } catch (Exception ex) {
                         ex.printStackTrace();
-                        showAlert(Alert.AlertType.ERROR, "Failed to save step " + testStep.getStepNumber() + ": " + ex.getMessage());
+                        showAlert(Alert.AlertType.ERROR, "Произошла ошибка при сохранении шагов " + testStep.getStepNumber() + ": " + ex.getMessage());
                         return; // Прекращаем выполнение, если запрос не удался
                     }
                 }
 
                 // Сообщение об успешном завершении
-                showAlert(Alert.AlertType.INFORMATION, "All steps saved successfully!");
+                showAlert(Alert.AlertType.INFORMATION, "Все шаги успешно сохранены!");
             } catch (Exception ex) {
                 ex.printStackTrace();
-                showAlert(Alert.AlertType.ERROR, "Failed to save steps: " + ex.getMessage());
+                showAlert(Alert.AlertType.ERROR, "Произошла ошибка при сохранении шагов: " + ex.getMessage());
             }
         });
         updateButton.setOnAction(e -> {
@@ -343,10 +343,10 @@ class TestManager {
             updatedTest.setUrl(updatedUrl);
             try {
                 updateTest(currentTestId, updatedTest);
-                showAlert(Alert.AlertType.INFORMATION, "Test updated successfully!");
+                showAlert(Alert.AlertType.INFORMATION, "Тест успешно был обновлен!");
             } catch (Exception ex) {
                 ex.printStackTrace();
-                showAlert(Alert.AlertType.ERROR, "Failed to update test: " + ex.getMessage());
+                showAlert(Alert.AlertType.ERROR, "Ошибка при обновлении теста: " + ex.getMessage());
             }
         });
         VBox vbox = new VBox(10, nameLabel, nameInput, descriptionLabel, descriptionInput, urlLabel, urlInput, updateButton, stepsTable, startButton, stopButton, replayButton, showReportButton, saveStepsButton);
